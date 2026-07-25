@@ -5336,7 +5336,8 @@ body .modern-layout .main-wrapper {
 
     width: 90%;
     max-width: 400px;
-    max-height: 80vh;
+    max-height: 85vh;
+    max-height: calc(100vh - 40px);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -5405,7 +5406,24 @@ body .modern-layout .main-wrapper {
 .nav-config-body {
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
     padding-right: 5px;
+    padding-bottom: 1.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-medium) transparent;
+}
+
+.nav-config-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.nav-config-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-config-body::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 3px;
 }
 
 .nav-item-editor {
@@ -6194,22 +6212,56 @@ body.page-404-active #page-loader {
 }
 
 /* Glassmorphism Styles for Custom Background Image */
-body.has-custom-bg .modern-layout {
-    background: transparent !important;
-}
-body.has-custom-bg .main-wrapper {
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-}
-body.has-custom-bg[data-theme="dark"] .main-wrapper {
-    background: rgba(15, 23, 42, 0.65) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-}
-
+body.has-custom-bg .modern-layout,
 body.has-custom-bg .dashboard-container {
     background: transparent !important;
+}
+
+body.has-custom-bg .main-wrapper {
+    background: rgba(245, 247, 250, 0.85) !important;
+}
+
+body.has-custom-bg[data-theme="dark"] .main-wrapper {
+    background: rgba(15, 23, 42, 0.88) !important;
+}
+
+body.has-custom-bg .cbi-section,
+body.has-custom-bg .cbi-map,
+body.has-custom-bg .cbi-value,
+body.has-custom-bg .widget,
+body.has-custom-bg .node,
+body.has-custom-bg .panel,
+body.has-custom-bg .cbi-singlearea,
+body.has-custom-bg .cbi-filebrowser {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.has-custom-bg[data-theme="dark"] .cbi-section,
+body.has-custom-bg[data-theme="dark"] .cbi-map,
+body.has-custom-bg[data-theme="dark"] .cbi-value,
+body.has-custom-bg[data-theme="dark"] .widget,
+body.has-custom-bg[data-theme="dark"] .node,
+body.has-custom-bg[data-theme="dark"] .panel,
+body.has-custom-bg[data-theme="dark"] .cbi-singlearea,
+body.has-custom-bg[data-theme="dark"] .cbi-filebrowser {
+    background: rgba(30, 41, 59, 0.88) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.has-glassmorphism .main-wrapper,
+body.has-glassmorphism .cbi-section,
+body.has-glassmorphism .cbi-map,
+body.has-glassmorphism .cbi-value,
+body.has-glassmorphism .widget,
+body.has-glassmorphism .node,
+body.has-glassmorphism .panel {
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
 }
 
 body.has-glassmorphism .cbi-section,
@@ -6217,12 +6269,17 @@ body.has-glassmorphism .cbi-map,
 body.has-glassmorphism .cbi-value,
 body.has-glassmorphism .widget,
 body.has-glassmorphism .node,
-body.has-glassmorphism .panel,
-body.has-custom-bg .cbi-section,
-body.has-custom-bg .cbi-map {
-    background: var(--glass-bg) !important;
+body.has-glassmorphism .panel {
+    background: rgba(255, 255, 255, 0.78) !important;
     border: 1px solid var(--glass-border) !important;
-    backdrop-filter: var(--glass-blur) !important;
-    -webkit-backdrop-filter: var(--glass-blur) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.has-glassmorphism[data-theme="dark"] .cbi-section,
+body.has-glassmorphism[data-theme="dark"] .cbi-map,
+body.has-glassmorphism[data-theme="dark"] .cbi-value,
+body.has-glassmorphism[data-theme="dark"] .widget,
+body.has-glassmorphism[data-theme="dark"] .node,
+body.has-glassmorphism[data-theme="dark"] .panel {
+    background: rgba(22, 27, 34, 0.82) !important;
+    border: 1px solid var(--glass-border) !important;
 }
