@@ -2,6 +2,63 @@
 'require baseclass';
 'require ui';
 
+const ACCENT_MAP = {
+    'default': { light: '#0061a4', dark: '#a0c9ff' },
+    'emerald': { light: '#059669', dark: '#34d399' },
+    'purple': { light: '#7c3aed', dark: '#c084fc' },
+    'amber': { light: '#d97706', dark: '#fbbf24' },
+    'rose': { light: '#e11d48', dark: '#fb7185' }
+};
+
+function applyAccentColor(accentKey) {
+    const key = accentKey || localStorage.getItem('theme_accent') || 'default';
+    if (key === 'default') {
+        document.documentElement.style.removeProperty('--primary-main');
+        document.documentElement.style.removeProperty('--primary-hover');
+        document.documentElement.style.removeProperty('--primary-active');
+    } else {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const color = ACCENT_MAP[key] ? (isDark ? ACCENT_MAP[key].dark : ACCENT_MAP[key].light) : null;
+        if (color) {
+            document.documentElement.style.setProperty('--primary-main', color);
+            document.documentElement.style.setProperty('--primary-hover', color);
+            document.documentElement.style.setProperty('--primary-active', color);
+        }
+    }
+}
+
+function triggerThemeTransition() {
+    if (document.body) {
+        document.body.classList.add('theme-transition');
+        setTimeout(() => document.body.classList.remove('theme-transition'), 300);
+    }
+}
+
+// Initial application on file load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => applyAccentColor());
+} else {
+    applyAccentColor();
+}
+
+window.addEventListener('themechange', () => applyAccentColor());
+
+// Keyboard shortcut Alt+D to toggle dark mode
+document.addEventListener('keydown', (e) => {
+    if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        triggerThemeTransition();
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const isDark = newTheme === 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+        localStorage.setItem('theme', newTheme);
+        applyAccentColor();
+        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme, isDark: isDark } }));
+    }
+});
+
 return baseclass.extend({
     __init__() {
         // Run 404 check
@@ -228,6 +285,7 @@ return baseclass.extend({
         themeBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            triggerThemeTransition();
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             const isDark = newTheme === 'dark';
@@ -284,7 +342,19 @@ return baseclass.extend({
 
             const body = modal.querySelector('.nav-config-body');
 
+            function selectAccentColor(e, key) {
+                if (key === 'default') {
+                    localStorage.removeItem('theme_accent');
+                } else {
+                    localStorage.setItem('theme_accent', key);
+                }
+                applyAccentColor(key);
+                modal.querySelectorAll('.btn-accent-select').forEach(b => b.classList.remove('active'));
+                if (e && e.target) e.target.classList.add('active');
+            }
+
             function selectThemeMode(e, mode) {
+                triggerThemeTransition();
                 if (mode === 'auto') {
                     localStorage.removeItem('theme');
                     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -296,6 +366,7 @@ return baseclass.extend({
                     document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
                     localStorage.setItem('theme', mode);
                 }
+                applyAccentColor();
                 window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: mode } }));
                 modal.querySelectorAll('.btn-theme-select').forEach(b => b.classList.remove('active'));
                 if (e && e.target) e.target.classList.add('active');
@@ -307,8 +378,10 @@ return baseclass.extend({
                 // Add Theme Section
                 const currentSaved = localStorage.getItem('theme');
                 const activeMode = !currentSaved ? 'auto' : currentSaved;
+                const currentAccent = localStorage.getItem('theme_accent') || 'default';
+
                 const themeControl = E('div', { 'class': 'nav-theme-section' }, [
-                    E('label', { 'class': 'nav-theme-label' }, [_('Theme Mode')]),
+                    E('label', { 'class': 'nav-theme-label' }, [_('Theme Mode (Alt + D)')]),
                     E('div', { 'class': 'nav-theme-options' }, [
                         E('button', {
                             'type': 'button',
@@ -325,6 +398,39 @@ return baseclass.extend({
                             'class': 'btn-theme-select' + (activeMode === 'auto' ? ' active' : ''),
                             'click': (e) => selectThemeMode(e, 'auto')
                         }, ['💻 Auto'])
+                    ]),
+                    E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 0.75rem;' }, [_('Accent Color')]),
+                    E('div', { 'class': 'nav-theme-options' }, [
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'default' ? ' active' : ''),
+                            'style': 'border-left: 4px solid #0061a4;',
+                            'click': (e) => selectAccentColor(e, 'default')
+                        }, ['Blue']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'emerald' ? ' active' : ''),
+                            'style': 'border-left: 4px solid #059669;',
+                            'click': (e) => selectAccentColor(e, 'emerald')
+                        }, ['Emerald']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'purple' ? ' active' : ''),
+                            'style': 'border-left: 4px solid #7c3aed;',
+                            'click': (e) => selectAccentColor(e, 'purple')
+                        }, ['Purple']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'amber' ? ' active' : ''),
+                            'style': 'border-left: 4px solid #d97706;',
+                            'click': (e) => selectAccentColor(e, 'amber')
+                        }, ['Amber']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'rose' ? ' active' : ''),
+                            'style': 'border-left: 4px solid #e11d48;',
+                            'click': (e) => selectAccentColor(e, 'rose')
+                        }, ['Rose'])
                     ])
                 ]);
                 body.appendChild(themeControl);

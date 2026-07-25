@@ -6110,3 +6110,26 @@ body.page-404-active #page-loader {
         transform: rotate(-20deg);
     }
 }
+
+/* Smooth Theme Transition */
+.theme-transition,
+.theme-transition *,
+.theme-transition ::before,
+.theme-transition ::after {
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition-property: background, background-color, border-color, color, fill, stroke, box-shadow !important;
+}
+
+/* LuCI SVG / Canvas Charts Dark Mode Overrides */
+[data-theme="dark"] svg text {
+    fill: var(--text-secondary) !important;
+}
+[data-theme="dark"] svg line {
+    stroke: var(--border-light) !important;
+}
+[data-theme="dark"] svg rect {
+    fill: var(--bg-card) !important;
+}
+[data-theme="dark"] .cbi-section-node > table {
+    background-color: var(--bg-card) !important;
+}

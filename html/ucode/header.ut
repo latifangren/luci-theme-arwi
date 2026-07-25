@@ -215,11 +215,19 @@
                                     }
                                 }
 
+                                function triggerThemeTransition() {
+                                    if (document.body) {
+                                        document.body.classList.add('theme-transition');
+                                        setTimeout(() => document.body.classList.remove('theme-transition'), 300);
+                                    }
+                                }
+
                                 updateIcons();
                                 window.addEventListener('themechange', updateIcons);
 
                                 if (toggleBtn) {
                                     toggleBtn.addEventListener('click', function() {
+                                        triggerThemeTransition();
                                         const currentTheme = document.documentElement.getAttribute('data-theme');
                                         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                                         const isDark = newTheme === 'dark';
