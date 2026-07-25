@@ -28,13 +28,6 @@ function applyAccentColor(accentKey) {
     }
 }
 
-function triggerThemeTransition() {
-    if (document.body) {
-        document.body.classList.add('theme-transition');
-        setTimeout(() => document.body.classList.remove('theme-transition'), 300);
-    }
-}
-
 // Initial application on file load
 function applyCustomImages() {
     const customLogo = localStorage.getItem('custom_logo');
@@ -49,11 +42,16 @@ function applyCustomImages() {
         layout.style.backgroundSize = 'cover';
         layout.style.backgroundAttachment = 'fixed';
         layout.style.backgroundPosition = 'center';
-        document.body.classList.add('has-custom-bg');
     } else {
         if (layout) {
             layout.style.backgroundImage = 'none';
         }
+    }
+
+    const glass = localStorage.getItem('theme_glassmorphism') === 'true';
+    if (glass && customAdminBg) {
+        document.body.classList.add('has-custom-bg');
+    } else {
         document.body.classList.remove('has-custom-bg');
     }
 }
@@ -68,9 +66,17 @@ if (document.readyState === 'loading') {
     applyCustomImages();
 }
 
-window.addEventListener('themechange', () => {
+window.addEventListener('themechange', (e) => {
     applyAccentColor();
     applyCustomImages();
+    // Silent sync theme toggle to router UCI configuration (fixes Issue 1)
+    if (e && e.detail && e.detail.theme && uci && typeof uci.set === 'function') {
+        const themeOption = e.detail.theme; // 'light' or 'dark'
+        uci.load('luci').then(function() {
+            uci.set('luci', 'arwi', 'theme_mode', themeOption);
+            uci.save();
+        });
+    }
 });
 
 // Keyboard shortcut Alt+D to toggle dark mode
@@ -107,6 +113,9 @@ return baseclass.extend({
                 const customLoginBgUrl = uci.get('luci', 'arwi', 'custom_login_bg_url') || '';
                 const customAdminBgUrl = uci.get('luci', 'arwi', 'custom_admin_bg_url') || '';
                 const customNavbarJson = uci.get('luci', 'arwi', 'custom_navbar_json') || '';
+                const glassmorphism = uci.get('luci', 'arwi', 'glassmorphism') || '0';
+
+                localStorage.setItem('theme_glassmorphism', glassmorphism === '1' ? 'true' : 'false');
 
                 if (themeMode !== 'auto') {
                     localStorage.setItem('theme', themeMode);
@@ -472,7 +481,6 @@ return baseclass.extend({
             }
 
             function selectThemeMode(e, mode) {
-                triggerThemeTransition();
                 if (mode === 'auto') {
                     localStorage.removeItem('theme');
                     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -488,6 +496,14 @@ return baseclass.extend({
                 window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: mode } }));
                 modal.querySelectorAll('.btn-theme-select').forEach(b => b.classList.remove('active'));
                 if (e && e.target) e.target.classList.add('active');
+            }
+
+            function selectGlassmorphism(e, enabled) {
+                localStorage.setItem('theme_glassmorphism', enabled ? 'true' : 'false');
+                applyCustomImages();
+                modal.querySelectorAll('.btn-glass-select').forEach(b => b.classList.remove('active'));
+                if (e && e.target) e.target.classList.add('active');
+                renderRows();
             }
 
             function renderRows() {
@@ -637,7 +653,21 @@ return baseclass.extend({
                                 if (layout) layout.style.backgroundImage = 'none';
                                 renderRows();
                             }
-                        }, ['Clear Dashboard BG']) : E([])
+                        }, ['Clear Dashboard BG']) : E([]),
+
+                        E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Glassmorphism Effect')]),
+                        E('div', { 'class': 'nav-theme-options' }, [
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-glass-select' + (localStorage.getItem('theme_glassmorphism') === 'true' ? ' active' : ''),
+                                'click': (e) => selectGlassmorphism(e, true)
+                            }, [_('Enable')]),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-glass-select' + (localStorage.getItem('theme_glassmorphism') !== 'true' ? ' active' : ''),
+                                'click': (e) => selectGlassmorphism(e, false)
+                            }, [_('Disable')])
+                        ])
                     ]);
                     body.appendChild(themeControl);
                 } else if (activeTab === 'navbar') {
@@ -708,6 +738,7 @@ return baseclass.extend({
                     uci.set('luci', 'arwi', 'theme_mode', themeMode);
                     uci.set('luci', 'arwi', 'accent_color', accentColor);
                     uci.set('luci', 'arwi', 'custom_navbar_json', JSON.stringify(config));
+                    uci.set('luci', 'arwi', 'glassmorphism', localStorage.getItem('theme_glassmorphism') === 'true' ? '1' : '0');
 
                     // Avoid saving heavy files to router space (limit: 50KB)
                     if (customLogo && customLogo.length < 50000) {
