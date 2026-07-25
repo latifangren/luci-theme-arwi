@@ -123,8 +123,9 @@ return baseclass.extend({
                     document.documentElement.setAttribute('data-theme', themeMode);
                     document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
                 } else {
-                    localStorage.removeItem('theme');
-                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const savedTheme = localStorage.getItem('theme');
+                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const isDark = savedTheme === 'dark' || (!savedTheme && systemDark);
                     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
                     document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
                 }
@@ -596,7 +597,7 @@ return baseclass.extend({
                                 if (logoImg) logoImg.src = (L && L.globals && L.globals.media) ? L.globals.media + '/brand.png' : '/luci-static/resources/brand.png';
                                 renderRows();
                             }
-                        }, ['Clear Logo']) : E([]),
+                        }, ['Clear Logo']) : '',
 
                         E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Custom Login Background')]),
                         E('input', {
@@ -623,7 +624,7 @@ return baseclass.extend({
                                 localStorage.removeItem('custom_login_bg');
                                 renderRows();
                             }
-                        }, ['Clear Login BG']) : E([]),
+                        }, ['Clear Login BG']) : '',
 
                         E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Custom Dashboard Background')]),
                         E('input', {
@@ -653,7 +654,7 @@ return baseclass.extend({
                                 if (layout) layout.style.backgroundImage = 'none';
                                 renderRows();
                             }
-                        }, ['Clear Dashboard BG']) : E([]),
+                        }, ['Clear Dashboard BG']) : '',
 
                         E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Glassmorphism Effect')]),
                         E('div', { 'class': 'nav-theme-options' }, [
