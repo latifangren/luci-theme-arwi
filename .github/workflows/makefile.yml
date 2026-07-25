@@ -2,16 +2,29 @@ name: Build luci-theme-4lpha
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'Makefile'
+      - 'css/**'
+      - 'html/**'
+      - 'js/**'
+  pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Clone luci-theme-4lpha
-        run: |
-          git clone -b "main" https://github.com/derisamedia/luci-theme-alpha-reborn.git luci-theme-4lpha
-          ls -R luci-theme-4lpha
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          path: luci-theme-4lpha
 
       - name: Install dependencies
         run: |
@@ -43,5 +56,5 @@ jobs:
       - name: Upload ipk
         uses: actions/upload-artifact@v4
         with:
-          name: luci-theme-4lpha
+          name: luci-theme-4lpha-ipk
           path: openwrt-sdk/bin/packages/**/*.ipk
