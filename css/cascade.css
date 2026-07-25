@@ -6163,3 +6163,32 @@ body.page-404-active #page-loader {
 [data-theme="dark"] .cbi-section-node > table {
     background-color: var(--bg-card) !important;
 }
+
+/* Fix wide content stretching main wrapper (Issues #4 & #9) */
+#maincontent {
+    max-width: 100%;
+    width: 100%;
+    overflow-x: auto;
+    min-width: 0;
+}
+
+/* Fix custom image icon centering and sizing in bottom-nav menu (Issues #2 & #5) */
+.mobile-nav-item img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.mobile-bottom-nav.compact .mobile-nav-item img {
+    width: 18px;
+    height: 18px;
+}
+
+/* Fix dropdown scroll capture overlay issue (e.g. Passwall subscription nodes) (Issue #13) */
+.cbi-dropdown,
+.cbi-dropdown-menu {
+    overflow-y: auto !important;
+    max-height: 380px !important;
+}
