@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - **Accent Color Picker:** Users can customize their accent color from Blue (Default), Emerald, Purple, Amber, and Rose options, persisting selection in `localStorage`.
 - **Keyboard Shortcut:** Toggle Dark Mode instantly using `Alt + D` globally.
 - **Custom Assets Kustomization (Issue #10):** Add custom upload fields inside the Preferences tab to let users set their own custom logo, custom login page background, or custom admin dashboard background (stored locally via `localStorage` base64 cache).
+- **UCI & Multi-Device Sync:** Leveraged UCI configuration backend `luci.arwi` on the router to securely save preferences (Navbar links, accent colors, theme darkmode, and external background URL pointers) across different browsers and devices (PC & mobile). Integrated size-based safety limit (<50KB) to shield router memory JFFS2 flash wear.
 
 ### Fixed
 - **FOUC Prevention:** Moved the theme initialization script block into the `<head>` of both `header.ut` and `header.htm` templates to prevent light/dark screen flickering.

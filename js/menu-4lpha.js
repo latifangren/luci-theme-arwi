@@ -1,6 +1,7 @@
 'use strict';
 'require baseclass';
 'require ui';
+'require uci';
 
 const ACCENT_MAP = {
     'default': { light: '#0061a4', dark: '#a0c9ff' },
@@ -92,13 +93,75 @@ return baseclass.extend({
         // Patch modal close animation
         this.patchModalCloseAnimation();
 
-        // Ensure ui.menu is available before loading
-        if (ui && ui.menu && typeof ui.menu.load === 'function') {
-            ui.menu.load().then(L.bind(this.render, this)).catch(function (err) {
-                console.error('Failed to load menu:', err);
+        // Load settings from UCI
+        const self = this;
+        if (uci && typeof uci.load === 'function') {
+            uci.load('luci').then(function() {
+                const themeMode = uci.get('luci', 'arwi', 'theme_mode') || 'auto';
+                const accentColor = uci.get('luci', 'arwi', 'accent_color') || 'default';
+                const customLogoUrl = uci.get('luci', 'arwi', 'custom_logo_url') || '';
+                const customLoginBgUrl = uci.get('luci', 'arwi', 'custom_login_bg_url') || '';
+                const customAdminBgUrl = uci.get('luci', 'arwi', 'custom_admin_bg_url') || '';
+                const customNavbarJson = uci.get('luci', 'arwi', 'custom_navbar_json') || '';
+
+                if (themeMode !== 'auto') {
+                    localStorage.setItem('theme', themeMode);
+                    const isDark = themeMode === 'dark';
+                    document.documentElement.setAttribute('data-theme', themeMode);
+                    document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+                } else {
+                    localStorage.removeItem('theme');
+                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+                }
+
+                if (accentColor) {
+                    if (accentColor === 'default') {
+                        localStorage.removeItem('theme_accent');
+                    } else {
+                        localStorage.setItem('theme_accent', accentColor);
+                    }
+                    applyAccentColor();
+                }
+
+                if (customLogoUrl) {
+                    localStorage.setItem('custom_logo', customLogoUrl);
+                    const logoImg = document.getElementById('sidebar-logo-img');
+                    if (logoImg) logoImg.src = customLogoUrl;
+                }
+
+                if (customLoginBgUrl) {
+                    localStorage.setItem('custom_login_bg', customLoginBgUrl);
+                }
+
+                if (customAdminBgUrl) {
+                    localStorage.setItem('custom_admin_bg', customAdminBgUrl);
+                    applyCustomImages();
+                }
+
+                if (customNavbarJson) {
+                    localStorage.setItem('alpha_mobile_nav_config', customNavbarJson);
+                }
+
+                if (ui && ui.menu && typeof ui.menu.load === 'function') {
+                    ui.menu.load().then(L.bind(self.render, self)).catch(function (err) {
+                        console.error('Failed to load menu:', err);
+                    });
+                }
+            }).catch(function() {
+                if (ui && ui.menu && typeof ui.menu.load === 'function') {
+                    ui.menu.load().then(L.bind(self.render, self)).catch(function (err) {
+                        console.error('Failed to load menu:', err);
+                    });
+                }
             });
         } else {
-            console.warn('LuCI menu system not available');
+            if (ui && ui.menu && typeof ui.menu.load === 'function') {
+                ui.menu.load().then(L.bind(self.render, self)).catch(function (err) {
+                    console.error('Failed to load menu:', err);
+                });
+            }
         }
     },
 
@@ -630,13 +693,68 @@ return baseclass.extend({
             function saveConfig() {
                 config = editConfig;
                 localStorage.setItem(LS_KEY, JSON.stringify(config));
+
+                if (uci && typeof uci.set === 'function') {
+                    const themeMode = localStorage.getItem('theme') || 'auto';
+                    const accentColor = localStorage.getItem('theme_accent') || 'default';
+                    const customLogo = localStorage.getItem('custom_logo') || '';
+                    const customLoginBg = localStorage.getItem('custom_login_bg') || '';
+                    const customAdminBg = localStorage.getItem('custom_admin_bg') || '';
+
+                    uci.set('luci', 'arwi', 'theme_mode', themeMode);
+                    uci.set('luci', 'arwi', 'accent_color', accentColor);
+                    uci.set('luci', 'arwi', 'custom_navbar_json', JSON.stringify(config));
+
+                    // Avoid saving heavy files to router space (limit: 50KB)
+                    if (customLogo && customLogo.length < 50000) {
+                        uci.set('luci', 'arwi', 'custom_logo_url', customLogo);
+                    } else {
+                        uci.set('luci', 'arwi', 'custom_logo_url', '');
+                    }
+
+                    if (customLoginBg && customLoginBg.length < 50000) {
+                        uci.set('luci', 'arwi', 'custom_login_bg_url', customLoginBg);
+                    } else {
+                        uci.set('luci', 'arwi', 'custom_login_bg_url', '');
+                    }
+
+                    if (customAdminBg && customAdminBg.length < 50000) {
+                        uci.set('luci', 'arwi', 'custom_admin_bg_url', customAdminBg);
+                    } else {
+                        uci.set('luci', 'arwi', 'custom_admin_bg_url', '');
+                    }
+
+                    uci.save().then(L.bind(ui.changes.apply, ui.changes));
+                }
+
                 closeConfigModal();
                 self.renderMobileBottomNav(tree);
             }
 
             function resetConfig() {
-                if (confirm(_('Reset to default 5 items?'))) {
+                if (confirm(_('Reset to default preferences?'))) {
                     localStorage.removeItem(LS_KEY);
+                    localStorage.removeItem('theme');
+                    localStorage.removeItem('theme_accent');
+                    localStorage.removeItem('custom_logo');
+                    localStorage.removeItem('custom_login_bg');
+                    localStorage.removeItem('custom_admin_bg');
+
+                    const logoImg = document.getElementById('sidebar-logo-img');
+                    if (logoImg) logoImg.src = (L && L.globals && L.globals.media) ? L.globals.media + '/brand.png' : '/luci-static/resources/brand.png';
+                    const layout = document.querySelector('.modern-layout');
+                    if (layout) layout.style.backgroundImage = 'none';
+
+                    if (uci && typeof uci.set === 'function') {
+                        uci.set('luci', 'arwi', 'theme_mode', 'auto');
+                        uci.set('luci', 'arwi', 'accent_color', 'default');
+                        uci.set('luci', 'arwi', 'custom_navbar_json', '');
+                        uci.set('luci', 'arwi', 'custom_logo_url', '');
+                        uci.set('luci', 'arwi', 'custom_login_bg_url', '');
+                        uci.set('luci', 'arwi', 'custom_admin_bg_url', '');
+                        uci.save().then(L.bind(ui.changes.apply, ui.changes));
+                    }
+
                     config = generateDefaultConfig();
                     closeConfigModal();
                     self.renderMobileBottomNav(tree);
