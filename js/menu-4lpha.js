@@ -35,13 +35,38 @@ function triggerThemeTransition() {
 }
 
 // Initial application on file load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => applyAccentColor());
-} else {
-    applyAccentColor();
+function applyCustomImages() {
+    const customLogo = localStorage.getItem('custom_logo');
+    if (customLogo) {
+        const logoImg = document.getElementById('sidebar-logo-img');
+        if (logoImg) logoImg.src = customLogo;
+    }
+    const customAdminBg = localStorage.getItem('custom_admin_bg');
+    if (customAdminBg) {
+        const layout = document.querySelector('.modern-layout');
+        if (layout) {
+            layout.style.backgroundImage = 'url(' + customAdminBg + ')';
+            layout.style.backgroundSize = 'cover';
+            layout.style.backgroundAttachment = 'fixed';
+            layout.style.backgroundPosition = 'center';
+        }
+    }
 }
 
-window.addEventListener('themechange', () => applyAccentColor());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        applyAccentColor();
+        applyCustomImages();
+    });
+} else {
+    applyAccentColor();
+    applyCustomImages();
+}
+
+window.addEventListener('themechange', () => {
+    applyAccentColor();
+    applyCustomImages();
+});
 
 // Keyboard shortcut Alt+D to toggle dark mode
 document.addEventListener('keydown', (e) => {
@@ -458,7 +483,94 @@ return baseclass.extend({
                                 'style': 'border-left: 4px solid #e11d48; text-align: left; padding-left: 12px;',
                                 'click': (e) => selectAccentColor(e, 'rose')
                             }, ['Rose'])
-                        ])
+                        ]),
+                        E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Custom Logo (Sidebar)')]),
+                        E('input', {
+                            'type': 'file',
+                            'accept': 'image/*',
+                            'class': 'form-control',
+                            'style': 'padding: 4px;',
+                            'change': (e) => {
+                                if (e.target.files[0]) {
+                                    const reader = new FileReader();
+                                    reader.onload = (evt) => {
+                                        localStorage.setItem('custom_logo', evt.target.result);
+                                        const logoImg = document.getElementById('sidebar-logo-img');
+                                        if (logoImg) logoImg.src = evt.target.result;
+                                        renderRows();
+                                    };
+                                    reader.readAsDataURL(e.target.files[0]);
+                                }
+                            }
+                        }),
+                        localStorage.getItem('custom_logo') ? E('button', {
+                            'type': 'button',
+                            'class': 'btn-reset',
+                            'style': 'margin-top: 5px; padding: 4px 8px; font-size: 0.75rem;',
+                            'click': () => {
+                                localStorage.removeItem('custom_logo');
+                                const logoImg = document.getElementById('sidebar-logo-img');
+                                if (logoImg) logoImg.src = (L && L.globals && L.globals.media) ? L.globals.media + '/brand.png' : '/luci-static/resources/brand.png';
+                                renderRows();
+                            }
+                        }, ['Clear Logo']) : E([]),
+
+                        E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Custom Login Background')]),
+                        E('input', {
+                            'type': 'file',
+                            'accept': 'image/*',
+                            'class': 'form-control',
+                            'style': 'padding: 4px;',
+                            'change': (e) => {
+                                if (e.target.files[0]) {
+                                    const reader = new FileReader();
+                                    reader.onload = (evt) => {
+                                        localStorage.setItem('custom_login_bg', evt.target.result);
+                                        renderRows();
+                                    };
+                                    reader.readAsDataURL(e.target.files[0]);
+                                }
+                            }
+                        }),
+                        localStorage.getItem('custom_login_bg') ? E('button', {
+                            'type': 'button',
+                            'class': 'btn-reset',
+                            'style': 'margin-top: 5px; padding: 4px 8px; font-size: 0.75rem;',
+                            'click': () => {
+                                localStorage.removeItem('custom_login_bg');
+                                renderRows();
+                            }
+                        }, ['Clear Login BG']) : E([]),
+
+                        E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1.25rem;' }, [_('Custom Dashboard Background')]),
+                        E('input', {
+                            'type': 'file',
+                            'accept': 'image/*',
+                            'class': 'form-control',
+                            'style': 'padding: 4px;',
+                            'change': (e) => {
+                                if (e.target.files[0]) {
+                                    const reader = new FileReader();
+                                    reader.onload = (evt) => {
+                                        localStorage.setItem('custom_admin_bg', evt.target.result);
+                                        applyCustomImages();
+                                        renderRows();
+                                    };
+                                    reader.readAsDataURL(e.target.files[0]);
+                                }
+                            }
+                        }),
+                        localStorage.getItem('custom_admin_bg') ? E('button', {
+                            'type': 'button',
+                            'class': 'btn-reset',
+                            'style': 'margin-top: 5px; padding: 4px 8px; font-size: 0.75rem;',
+                            'click': () => {
+                                localStorage.removeItem('custom_admin_bg');
+                                const layout = document.querySelector('.modern-layout');
+                                if (layout) layout.style.backgroundImage = 'none';
+                                renderRows();
+                            }
+                        }, ['Clear Dashboard BG']) : E([])
                     ]);
                     body.appendChild(themeControl);
                 } else if (activeTab === 'navbar') {

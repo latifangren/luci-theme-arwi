@@ -9,6 +9,17 @@
 			<%+header%>
 
 				<div class="login-page">
+					<script>
+						(function() {
+							var customBg = localStorage.getItem('custom_login_bg');
+							if (customBg) {
+								var container = document.querySelector('.login-page');
+								if (container) {
+									container.style.backgroundImage = 'linear-gradient(135deg, rgba(15, 32, 39, 0.85) 0%, rgba(32, 58, 67, 0.85) 50%, rgba(44, 83, 100, 0.85) 100%), url(' + customBg + ')';
+								}
+							}
+						})();
+					</script>
 					<div class="login-card">
 						<div class="login-header">
 							<img src="<%=media%>/alpha-os.png" alt="AlphaOS" class="login-brand">

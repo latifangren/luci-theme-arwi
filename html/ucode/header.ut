@@ -142,7 +142,15 @@
 			<aside class="sidebar" id="sidebar">
 				<div class="sidebar-logo">
 					<div class="sidebar-logo-icon" style="background: none; padding: 0; width: auto; height: auto;">
-						<img src="{{ media }}/brand.png" alt="Brand" style="width: 160px; height: auto; display: block;">
+						<img id="sidebar-logo-img" src="{{ media }}/brand.png" alt="Brand" style="width: 160px; height: auto; display: block;">
+						<script>
+							(function() {
+								const customLogo = localStorage.getItem('custom_logo');
+								if (customLogo) {
+									document.getElementById('sidebar-logo-img').src = customLogo;
+								}
+							})();
+						</script>
 					</div>
 
 				</div>
