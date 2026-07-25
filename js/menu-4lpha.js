@@ -49,7 +49,13 @@ function applyCustomImages() {
     }
 
     const glass = localStorage.getItem('theme_glassmorphism') === 'true';
-    if (glass && customAdminBg) {
+    if (glass) {
+        document.body.classList.add('has-glassmorphism');
+    } else {
+        document.body.classList.remove('has-glassmorphism');
+    }
+
+    if (customAdminBg) {
         document.body.classList.add('has-custom-bg');
     } else {
         document.body.classList.remove('has-custom-bg');
