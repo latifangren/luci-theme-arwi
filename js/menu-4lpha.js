@@ -315,19 +315,33 @@ return baseclass.extend({
         function openConfigModal() {
             // Local state for editing
             let editConfig = JSON.parse(JSON.stringify(config));
+            let activeTab = 'theme'; // 'theme' or 'navbar'
 
             // Create Modal DOM
             const modal = E('div', { 'class': 'nav-config-modal', 'id': 'mobile-nav-config-modal' }, [
                 E('div', { 'class': 'nav-config-card' }, [
                     E('div', { 'class': 'nav-config-header' }, [
-                        E('h3', { 'class': 'nav-config-title' }, [_('Customize Navbar')]),
+                        E('h3', { 'class': 'nav-config-title' }, [_('Preferences')]),
                         E('button', { 'class': 'nav-config-close', 'click': closeConfigModal }, ['✕'])
+                    ]),
+                    E('div', { 'class': 'modal-tabs' }, [
+                        E('button', {
+                            'type': 'button',
+                            'class': 'modal-tab-btn active',
+                            'click': (e) => switchTab(e, 'theme')
+                        }, [_('Theme Settings')]),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'modal-tab-btn',
+                            'click': (e) => switchTab(e, 'navbar')
+                        }, [_('Navbar Links')])
                     ]),
                     E('div', { 'class': 'nav-config-body' }, []), // Rows injected here
                     E('div', { 'class': 'nav-config-actions' }, [
                         (function () {
                             const btn = E('button', {
                                 'class': 'btn-add',
+                                'style': 'display: none;',
                                 'click': addItem
                             });
                             btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Item';
@@ -341,6 +355,18 @@ return baseclass.extend({
             ]);
 
             const body = modal.querySelector('.nav-config-body');
+
+            function switchTab(e, tabName) {
+                activeTab = tabName;
+                modal.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+                if (e && e.target) e.target.classList.add('active');
+                
+                const addBtn = modal.querySelector('.btn-add');
+                if (addBtn) {
+                    addBtn.style.display = (activeTab === 'navbar') ? 'flex' : 'none';
+                }
+                renderRows();
+            }
 
             function selectAccentColor(e, key) {
                 if (key === 'default') {
@@ -375,107 +401,109 @@ return baseclass.extend({
             function renderRows() {
                 body.innerHTML = '';
 
-                // Add Theme Section
-                const currentSaved = localStorage.getItem('theme');
-                const activeMode = !currentSaved ? 'auto' : currentSaved;
-                const currentAccent = localStorage.getItem('theme_accent') || 'default';
+                if (activeTab === 'theme') {
+                    // Add Theme Section
+                    const currentSaved = localStorage.getItem('theme');
+                    const activeMode = !currentSaved ? 'auto' : currentSaved;
+                    const currentAccent = localStorage.getItem('theme_accent') || 'default';
 
-                const themeControl = E('div', { 'class': 'nav-theme-section' }, [
-                    E('label', { 'class': 'nav-theme-label' }, [_('Theme Mode (Alt + D)')]),
-                    E('div', { 'class': 'nav-theme-options' }, [
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select' + (activeMode === 'light' ? ' active' : ''),
-                            'click': (e) => selectThemeMode(e, 'light')
-                        }, ['☀️ Light']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select' + (activeMode === 'dark' ? ' active' : ''),
-                            'click': (e) => selectThemeMode(e, 'dark')
-                        }, ['🌙 Dark']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select' + (activeMode === 'auto' ? ' active' : ''),
-                            'click': (e) => selectThemeMode(e, 'auto')
-                        }, ['💻 Auto'])
-                    ]),
-                    E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 0.75rem;' }, [_('Accent Color')]),
-                    E('div', { 'class': 'nav-theme-options' }, [
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'default' ? ' active' : ''),
-                            'style': 'border-left: 4px solid #0061a4;',
-                            'click': (e) => selectAccentColor(e, 'default')
-                        }, ['Blue']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'emerald' ? ' active' : ''),
-                            'style': 'border-left: 4px solid #059669;',
-                            'click': (e) => selectAccentColor(e, 'emerald')
-                        }, ['Emerald']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'purple' ? ' active' : ''),
-                            'style': 'border-left: 4px solid #7c3aed;',
-                            'click': (e) => selectAccentColor(e, 'purple')
-                        }, ['Purple']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'amber' ? ' active' : ''),
-                            'style': 'border-left: 4px solid #d97706;',
-                            'click': (e) => selectAccentColor(e, 'amber')
-                        }, ['Amber']),
-                        E('button', {
-                            'type': 'button',
-                            'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'rose' ? ' active' : ''),
-                            'style': 'border-left: 4px solid #e11d48;',
-                            'click': (e) => selectAccentColor(e, 'rose')
-                        }, ['Rose'])
-                    ])
-                ]);
-                body.appendChild(themeControl);
-
-                editConfig.forEach((item, idx) => {
-                    const row = E('div', { 'class': 'nav-item-editor' }, [
-                        E('div', { 'class': 'form-group' }, [
-                            E('label', {}, ['Title']),
-                            E('input', { 'type': 'text', 'class': 'form-control', 'value': item.title || '', 'change': (e) => item.title = e.target.value })
+                    const themeControl = E('div', { 'class': 'nav-theme-section' }, [
+                        E('label', { 'class': 'nav-theme-label' }, [_('Theme Mode (Alt + D)')]),
+                        E('div', { 'class': 'nav-theme-options' }, [
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select' + (activeMode === 'light' ? ' active' : ''),
+                                'click': (e) => selectThemeMode(e, 'light')
+                            }, ['☀️ Light']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select' + (activeMode === 'dark' ? ' active' : ''),
+                                'click': (e) => selectThemeMode(e, 'dark')
+                            }, ['🌙 Dark']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select' + (activeMode === 'auto' ? ' active' : ''),
+                                'click': (e) => selectThemeMode(e, 'auto')
+                            }, ['💻 Auto'])
                         ]),
-                        E('div', { 'class': 'form-group' }, [
-                            E('label', {}, ['URL']),
-                            E('input', { 'type': 'text', 'class': 'form-control', 'value': item.url || '#', 'change': (e) => item.url = e.target.value })
-                        ]),
-                        E('div', { 'class': 'form-group' }, [
-                            E('label', {}, ['Icon']),
-                            E('input', { 'type': 'text', 'class': 'form-control', 'placeholder': 'SVG or URL', 'value': (item.icon && item.icon.startsWith('<svg')) ? 'SVG Icon' : item.icon, 'disabled': true }),
-                            E('input', {
-                                'type': 'file', 'accept': 'image/*', 'style': 'margin-top:5px', 'change': (e) => {
-                                    if (e.target.files[0]) {
-                                        const reader = new FileReader();
-                                        reader.onload = (evt) => {
-                                            item.icon = evt.target.result;
-                                            renderRows(); // Re-render to show update (optional, or just update state)
-                                        };
-                                        reader.readAsDataURL(e.target.files[0]);
-                                    }
-                                }
-                            })
-                        ]),
-                        (function () {
-                            const btn = E('button', {
-                                'class': 'btn-delete',
-                                'title': 'Remove Item',
-                                'click': () => {
-                                    editConfig.splice(idx, 1);
-                                    renderRows();
-                                }
-                            });
-                            btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
-                            return btn;
-                        })()
+                        E('label', { 'class': 'nav-theme-label', 'style': 'margin-top: 1rem;' }, [_('Accent Color')]),
+                        E('div', { 'class': 'nav-theme-options', 'style': 'display: flex; flex-direction: column; gap: 8px;' }, [
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'default' ? ' active' : ''),
+                                'style': 'border-left: 4px solid #0061a4; text-align: left; padding-left: 12px;',
+                                'click': (e) => selectAccentColor(e, 'default')
+                            }, ['Blue (Default)']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'emerald' ? ' active' : ''),
+                                'style': 'border-left: 4px solid #059669; text-align: left; padding-left: 12px;',
+                                'click': (e) => selectAccentColor(e, 'emerald')
+                            }, ['Emerald']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'purple' ? ' active' : ''),
+                                'style': 'border-left: 4px solid #7c3aed; text-align: left; padding-left: 12px;',
+                                'click': (e) => selectAccentColor(e, 'purple')
+                            }, ['Purple']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'amber' ? ' active' : ''),
+                                'style': 'border-left: 4px solid #d97706; text-align: left; padding-left: 12px;',
+                                'click': (e) => selectAccentColor(e, 'amber')
+                            }, ['Amber']),
+                            E('button', {
+                                'type': 'button',
+                                'class': 'btn-theme-select btn-accent-select' + (currentAccent === 'rose' ? ' active' : ''),
+                                'style': 'border-left: 4px solid #e11d48; text-align: left; padding-left: 12px;',
+                                'click': (e) => selectAccentColor(e, 'rose')
+                            }, ['Rose'])
+                        ])
                     ]);
-                    body.appendChild(row);
-                });
+                    body.appendChild(themeControl);
+                } else if (activeTab === 'navbar') {
+                    editConfig.forEach((item, idx) => {
+                        const row = E('div', { 'class': 'nav-item-editor' }, [
+                            E('div', { 'class': 'form-group' }, [
+                                E('label', {}, ['Title']),
+                                E('input', { 'type': 'text', 'class': 'form-control', 'value': item.title || '', 'change': (e) => item.title = e.target.value })
+                            ]),
+                            E('div', { 'class': 'form-group' }, [
+                                E('label', {}, ['URL']),
+                                E('input', { 'type': 'text', 'class': 'form-control', 'value': item.url || '#', 'change': (e) => item.url = e.target.value })
+                            ]),
+                            E('div', { 'class': 'form-group' }, [
+                                E('label', {}, ['Icon']),
+                                E('input', { 'type': 'text', 'class': 'form-control', 'placeholder': 'SVG or URL', 'value': (item.icon && item.icon.startsWith('<svg')) ? 'SVG Icon' : item.icon, 'disabled': true }),
+                                E('input', {
+                                    'type': 'file', 'accept': 'image/*', 'style': 'margin-top:5px', 'change': (e) => {
+                                        if (e.target.files[0]) {
+                                            const reader = new FileReader();
+                                            reader.onload = (evt) => {
+                                                item.icon = evt.target.result;
+                                                renderRows(); // Re-render to show update (optional, or just update state)
+                                            };
+                                            reader.readAsDataURL(e.target.files[0]);
+                                        }
+                                    }
+                                })
+                            ]),
+                            (function () {
+                                const btn = E('button', {
+                                    'class': 'btn-delete',
+                                    'title': 'Remove Item',
+                                    'click': () => {
+                                        editConfig.splice(idx, 1);
+                                        renderRows();
+                                    }
+                                });
+                                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+                                return btn;
+                            })()
+                        ]);
+                        body.appendChild(row);
+                    });
+                }
             }
 
             function addItem() {

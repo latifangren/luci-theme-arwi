@@ -5357,6 +5357,36 @@ body .modern-layout .main-wrapper {
     padding-bottom: 0.5rem;
 }
 
+.modal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 8px;
+}
+
+.modal-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.modal-tab-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.modal-tab-btn.active {
+    background: var(--primary-main);
+    color: #ffffff;
+}
+
 .nav-config-title {
     font-size: 1.1rem;
     font-weight: 700;
