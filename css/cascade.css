@@ -6192,3 +6192,30 @@ body.page-404-active #page-loader {
     overflow-y: auto !important;
     max-height: 380px !important;
 }
+
+/* Glassmorphism Styles for Custom Background Image */
+body.has-custom-bg .modern-layout {
+    background: transparent !important;
+}
+body.has-custom-bg .main-wrapper {
+    background: rgba(248, 249, 252, 0.5) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+body.has-custom-bg[data-theme="dark"] .main-wrapper {
+    background: rgba(17, 19, 21, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+body.has-custom-bg .dashboard-container {
+    background: transparent !important;
+}
+
+body.has-custom-bg .cbi-section,
+body.has-custom-bg .cbi-map {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+}

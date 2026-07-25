@@ -43,14 +43,18 @@ function applyCustomImages() {
         if (logoImg) logoImg.src = customLogo;
     }
     const customAdminBg = localStorage.getItem('custom_admin_bg');
-    if (customAdminBg) {
-        const layout = document.querySelector('.modern-layout');
+    const layout = document.querySelector('.modern-layout');
+    if (customAdminBg && layout) {
+        layout.style.backgroundImage = 'url(' + customAdminBg + ')';
+        layout.style.backgroundSize = 'cover';
+        layout.style.backgroundAttachment = 'fixed';
+        layout.style.backgroundPosition = 'center';
+        document.body.classList.add('has-custom-bg');
+    } else {
         if (layout) {
-            layout.style.backgroundImage = 'url(' + customAdminBg + ')';
-            layout.style.backgroundSize = 'cover';
-            layout.style.backgroundAttachment = 'fixed';
-            layout.style.backgroundPosition = 'center';
+            layout.style.backgroundImage = 'none';
         }
+        document.body.classList.remove('has-custom-bg');
     }
 }
 
@@ -744,6 +748,7 @@ return baseclass.extend({
                     if (logoImg) logoImg.src = (L && L.globals && L.globals.media) ? L.globals.media + '/brand.png' : '/luci-static/resources/brand.png';
                     const layout = document.querySelector('.modern-layout');
                     if (layout) layout.style.backgroundImage = 'none';
+                    document.body.classList.remove('has-custom-bg');
 
                     if (uci && typeof uci.set === 'function') {
                         uci.set('luci', 'arwi', 'theme_mode', 'auto');
