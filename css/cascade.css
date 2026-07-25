@@ -5454,6 +5454,91 @@ textarea.form-control {
     color: var(--text-secondary);
 }
 
+.nav-theme-section {
+    background: var(--bg-hover);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-light);
+}
+
+.nav-theme-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.nav-theme-options {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-theme-select {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-medium);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-theme-select:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-main);
+}
+
+.btn-theme-select.active {
+    background: var(--primary-main);
+    color: var(--on-primary, #ffffff);
+    border-color: var(--primary-main);
+}
+
+.btn-add {
+    background: var(--bg-panel);
+    color: var(--primary-main);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add:hover {
+    background: var(--bg-hover);
+}
+
+.btn-delete {
+    background: var(--error-main);
+    color: var(--on-error, #ffffff);
+    border: none;
+    border-radius: 6px;
+    padding: 0;
+    height: 38px;
+    width: 38px;
+    min-width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 24px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.btn-delete:hover {
+    opacity: 0.85;
+}
+
 
 .mobile-nav-edit-trigger {
     margin: 0;

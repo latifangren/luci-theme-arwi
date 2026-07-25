@@ -22,12 +22,13 @@
 		<title>{{ striptags(`${boardinfo.hostname ?? '?'}${node ? ` - ${node.title}` : ''}`) }} - LuCI</title>
 		{% if (!darkpref): %}
 			<script>
-				var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)'),
-				    rootElement = document.querySelector(':root'),
-				    setDarkMode = function(match) { rootElement.setAttribute('data-darkmode', match.matches) };
-
-				mediaQuery.addEventListener('change', setDarkMode);
-				setDarkMode(mediaQuery);
+				(function() {
+					var savedTheme = localStorage.getItem('theme');
+					var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+					var isDark = savedTheme === 'dark' || (!savedTheme && systemDark);
+					document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+					document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+				})();
 			</script>
 		{% endif %}
 		<meta name="viewport" content="initial-scale=1.0">
@@ -206,36 +207,28 @@
                                 const moonIcon = document.getElementById('theme-icon-moon');
                                 const sunIcon = document.getElementById('theme-icon-sun');
                                 
-                                function updateIcons(isDark) {
-                                    if (isDark) {
-                                        moonIcon.style.display = 'none';
-                                        sunIcon.style.display = 'block';
-                                    } else {
-                                        moonIcon.style.display = 'block';
-                                        sunIcon.style.display = 'none';
+                                function updateIcons() {
+                                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                                    if (moonIcon && sunIcon) {
+                                        moonIcon.style.display = isDark ? 'none' : 'block';
+                                        sunIcon.style.display = isDark ? 'block' : 'none';
                                     }
                                 }
 
-                                // 1. Check saved preference
-                                const savedTheme = localStorage.getItem('theme');
-                                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                                let isDark = savedTheme === 'dark' || (!savedTheme && systemDark);
+                                updateIcons();
+                                window.addEventListener('themechange', updateIcons);
 
-                                // 2. Apply immediately
-                                if (isDark) {
-                                    document.documentElement.setAttribute('data-theme', 'dark');
-                                    updateIcons(true);
-                                }
-
-                                // 3. Handle Click
                                 if (toggleBtn) {
                                     toggleBtn.addEventListener('click', function() {
                                         const currentTheme = document.documentElement.getAttribute('data-theme');
                                         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                                        const isDark = newTheme === 'dark';
                                         
                                         document.documentElement.setAttribute('data-theme', newTheme);
+                                        document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
                                         localStorage.setItem('theme', newTheme);
-                                        updateIcons(newTheme === 'dark');
+                                        updateIcons();
+                                        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme, isDark: isDark } }));
                                     });
                                 }
                             })();

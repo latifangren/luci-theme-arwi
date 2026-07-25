@@ -210,7 +210,37 @@ return baseclass.extend({
             nav.appendChild(link);
         });
 
-        // 4. Add "Edit" Trigger
+        // 4. Add Theme Toggle Trigger
+        const themeBtn = E('button', {
+            'class': 'mobile-nav-item mobile-nav-theme-trigger',
+            'aria-label': 'Toggle Theme'
+        });
+
+        const updateNavThemeIcon = () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeBtn.innerHTML = isDark
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        };
+        updateNavThemeIcon();
+        window.addEventListener('themechange', updateNavThemeIcon);
+
+        themeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const isDark = newTheme === 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+            localStorage.setItem('theme', newTheme);
+            updateNavThemeIcon();
+            window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: newTheme, isDark: isDark } }));
+        });
+
+        nav.appendChild(themeBtn);
+
+        // 5. Add "Edit" Trigger
         const editBtn = E('button', { 'class': 'mobile-nav-item mobile-nav-edit-trigger' });
         editBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
@@ -240,7 +270,6 @@ return baseclass.extend({
                         (function () {
                             const btn = E('button', {
                                 'class': 'btn-add',
-                                'style': 'background:#e0f2fe; color:#0369a1; border:none; border-radius:4px; padding:8px 16px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; cursor:pointer;',
                                 'click': addItem
                             });
                             btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Item';
@@ -255,8 +284,51 @@ return baseclass.extend({
 
             const body = modal.querySelector('.nav-config-body');
 
+            function selectThemeMode(e, mode) {
+                if (mode === 'auto') {
+                    localStorage.removeItem('theme');
+                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+                } else {
+                    const isDark = mode === 'dark';
+                    document.documentElement.setAttribute('data-theme', mode);
+                    document.documentElement.setAttribute('data-darkmode', isDark ? 'true' : 'false');
+                    localStorage.setItem('theme', mode);
+                }
+                window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: mode } }));
+                modal.querySelectorAll('.btn-theme-select').forEach(b => b.classList.remove('active'));
+                if (e && e.target) e.target.classList.add('active');
+            }
+
             function renderRows() {
                 body.innerHTML = '';
+
+                // Add Theme Section
+                const currentSaved = localStorage.getItem('theme');
+                const activeMode = !currentSaved ? 'auto' : currentSaved;
+                const themeControl = E('div', { 'class': 'nav-theme-section' }, [
+                    E('label', { 'class': 'nav-theme-label' }, [_('Theme Mode')]),
+                    E('div', { 'class': 'nav-theme-options' }, [
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select' + (activeMode === 'light' ? ' active' : ''),
+                            'click': (e) => selectThemeMode(e, 'light')
+                        }, ['☀️ Light']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select' + (activeMode === 'dark' ? ' active' : ''),
+                            'click': (e) => selectThemeMode(e, 'dark')
+                        }, ['🌙 Dark']),
+                        E('button', {
+                            'type': 'button',
+                            'class': 'btn-theme-select' + (activeMode === 'auto' ? ' active' : ''),
+                            'click': (e) => selectThemeMode(e, 'auto')
+                        }, ['💻 Auto'])
+                    ])
+                ]);
+                body.appendChild(themeControl);
+
                 editConfig.forEach((item, idx) => {
                     const row = E('div', { 'class': 'nav-item-editor' }, [
                         E('div', { 'class': 'form-group' }, [
@@ -286,7 +358,6 @@ return baseclass.extend({
                         (function () {
                             const btn = E('button', {
                                 'class': 'btn-delete',
-                                'style': 'background:#ef4444; color:white; border:none; border-radius:4px; padding:0; height:38px; width:38px; min-width:38px; display:flex; align-items:center; justify-content:center; margin-top:24px; cursor:pointer;',
                                 'title': 'Remove Item',
                                 'click': () => {
                                     editConfig.splice(idx, 1);
