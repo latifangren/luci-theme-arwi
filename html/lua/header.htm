@@ -28,21 +28,37 @@
 								setDarkMode(mediaQuery);
 							</script>
 							<% end %>
-								<meta name="viewport" content="initial-scale=1.0">
+								<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
 								<!-- Stylesheets -->
 								<link rel="stylesheet" href="<%=media%>/cascade.css?v=25.168.50434~d6b13f6">
 								<link rel="icon" href="<%=media%>/favicon.ico" sizes="any">
 
-								<!-- PWA Manifest & Service Worker -->
-								<link rel="manifest" href="<%=media%>/PWA/manifest.json">
-								<meta name="theme-color" content="#000000ff">
+								<!-- PWA Manifest, Icons & Meta Tags -->
+								<link rel="manifest" href="<%=media%>/PWA/manifest.json?v=4.2.2">
+								<meta name="theme-color" content="#111315">
+								<meta name="mobile-web-app-capable" content="yes">
+								<meta name="apple-mobile-web-app-capable" content="yes">
+								<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+								<meta name="apple-mobile-web-app-title" content="Arwi">
+								<link rel="apple-touch-icon" href="<%=media%>/PWA/icon-192.png?v=4.2.2">
+								<link rel="apple-touch-icon" sizes="192x192" href="<%=media%>/PWA/icon-192.png?v=4.2.2">
+								<link rel="apple-touch-icon" sizes="512x512" href="<%=media%>/PWA/icon-512.png?v=4.2.2">
+
+								<!-- PWA Service Worker Registration -->
 								<script>
 									if ('serviceWorker' in navigator) {
 										window.addEventListener('load', function () {
-											navigator.serviceWorker.register('<%=media%>/PWA/sw.js', { scope: '/' })
-												.then(function (registration) { console.log('SW registered:', registration); })
-												.catch(function (error) { console.log('SW registration failed:', error); });
+											navigator.serviceWorker.register('/sw.js', { scope: '/' })
+												.catch(function () {
+													return navigator.serviceWorker.register('<%=media%>/PWA/sw.js');
+												})
+												.then(function (reg) {
+													if (reg) console.log('Alpha PWA: ServiceWorker registered with scope:', reg.scope);
+												})
+												.catch(function (err) {
+													console.warn('Alpha PWA: ServiceWorker registration failed:', err);
+												});
 										});
 									}
 								</script>
@@ -174,6 +190,16 @@
 										</div>
 
 										<div class="top-header-right">
+											<button class="fullscreen-toggle" id="fullscreen-toggle" aria-label="Toggle Fullscreen" title="Toggle Fullscreen"
+												style="border: none; background: transparent; cursor: pointer; color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; padding: 4px; margin-right: 6px;">
+												<svg id="fullscreen-icon-expand" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: block;">
+													<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+												</svg>
+												<svg id="fullscreen-icon-compress" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+													<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+												</svg>
+											</button>
+
 											<button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark Mode"
 												style="border: none; background: transparent; cursor: pointer; color: var(--text-secondary);">
 												<svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24"
@@ -195,6 +221,38 @@
 													<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
 												</svg>
 											</button>
+
+											<script>
+												(function () {
+													var fsBtn = document.getElementById('fullscreen-toggle');
+													var iconExpand = document.getElementById('fullscreen-icon-expand');
+													var iconCompress = document.getElementById('fullscreen-icon-compress');
+
+													function updateFsIcons() {
+														var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+														if (iconExpand && iconCompress) {
+															iconExpand.style.display = isFs ? 'none' : 'block';
+															iconCompress.style.display = isFs ? 'block' : 'none';
+														}
+													}
+
+													if (fsBtn) {
+														fsBtn.addEventListener('click', function () {
+															if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+																var el = document.documentElement;
+																if (el.requestFullscreen) el.requestFullscreen().catch(function () { });
+																else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+															} else {
+																if (document.exitFullscreen) document.exitFullscreen().catch(function () { });
+																else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+															}
+														});
+													}
+
+													document.addEventListener('fullscreenchange', updateFsIcons);
+													document.addEventListener('webkitfullscreenchange', updateFsIcons);
+												})();
+											</script>
 
 											<script>
 												(function () {

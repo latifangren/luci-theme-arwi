@@ -10,7 +10,7 @@ THEME_NAME:=Arwi
 THEME_TITLE:=Arwi
 
 PKG_NAME:=luci-theme-$(THEME_NAME)
-PKG_VERSION:=4.2.2_beta1
+PKG_VERSION:=4.2.3_beta2
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -34,6 +34,12 @@ endef
 define Package/luci-theme-$(THEME_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	echo "uci set luci.themes.$(THEME_TITLE)=/luci-static/$(THEME_NAME); uci commit luci" > $(1)/etc/uci-defaults/30-luci-theme-$(THEME_NAME)
+
+	# === PWA Root Support ===
+	$(INSTALL_DIR) $(1)/www
+	$(CP) ./css/PWA/sw.js $(1)/www/sw.js 2>/dev/null || true
+	$(CP) ./css/PWA/manifest.json $(1)/www/manifest.json 2>/dev/null || true
+
 	$(INSTALL_DIR) $(1)/www/luci-static/$(THEME_NAME)
 	$(CP) -a ./css/* $(1)/www/luci-static/$(THEME_NAME)/ 2>/dev/null || true
 
@@ -44,7 +50,6 @@ define Package/luci-theme-$(THEME_NAME)/install
 	# === UCODE (≥23/24) ===
 	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes/$(THEME_NAME)
 	$(CP) -a ./html/ucode/* $(1)/usr/share/ucode/luci/template/themes/$(THEME_NAME)/ 2>/dev/null || true
-
 
 	$(INSTALL_DIR) $(1)/www/luci-static/resources
 	$(CP) -a ./js/* $(1)/www/luci-static/resources/ 2>/dev/null || true

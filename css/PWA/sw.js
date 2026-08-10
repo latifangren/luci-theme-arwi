@@ -1,25 +1,42 @@
-const CACHE_NAME = 'openwrt-alpha-v1';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'arwi-pwa-v3';
+
+// Core static assets to try pre-caching
+const CORE_STATIC_ASSETS = [
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
+    './icon-pwa.png',
+    './icon-maskable-192.png',
+    './icon-maskable-512.png',
     '../cascade.css',
-    '../../resources/menu-4lpha.js',
-    '../alpha-os.png',
     '../brand.png',
-    '../icon-pwa.png',
-    '../dashboard.png',
-    '../favicon.ico',
-    './manifest.json'
+    '../alpha-os.png',
+    '../favicon.ico'
 ];
 
-// Install Event: Cache Static Assets
+// Install Event: Activate immediately and pre-cache static assets safely
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
+            return Promise.allSettled(
+                CORE_STATIC_ASSETS.map((url) =>
+                    fetch(url)
+                        .then((res) => {
+                            if (res && res.ok) {
+                                return cache.put(url, res);
+                            }
+                        })
+                        .catch(() => {
+                            // Silently ignore pre-cache miss
+                        })
+                )
+            );
         })
     );
 });
 
-// Activate Event: Cleanup Old Caches
+// Activate Event: Cleanup Old Caches & claim clients
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keyList) => {
@@ -28,31 +45,83 @@ self.addEventListener('activate', (event) => {
                     return caches.delete(key);
                 }
             }));
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
-// Fetch Event: Network First, Fallback to Cache (Safe strategy for dynamic admin panels)
-// Or Cache First for specific static assets?
-// For an admin panel, we generally want fresh content for HTML/API, but static assets can be cached.
+// Fetch Event: Safe strategy for LuCI Admin Panel
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+    const request = event.request;
 
-    // Check if request is for one of our static assets
-    // Simplified to check if pathname ends with the filename of cached assets
-    const isStatic = ASSETS_TO_CACHE.some(asset => url.pathname.endsWith(asset.split('/').pop()));
+    // Only handle GET requests
+    if (request.method !== 'GET') {
+        return;
+    }
 
-    if (isStatic) {
-        // Cache First for known static assets
+    const url = new URL(request.url);
+
+    // Bypass caching for LuCI dynamic endpoints, API, RPC, login/logout, and ubus
+    const isDynamic = url.pathname.includes('/cgi-bin/') ||
+                      url.pathname.includes('/ubus') ||
+                      url.pathname.includes('/rpc') ||
+                      url.pathname.includes('/admin/logout') ||
+                      url.searchParams.has('status');
+
+    if (isDynamic) {
+        // Network-only for live LuCI data
         event.respondWith(
-            caches.match(event.request).then((response) => {
-                return response || fetch(event.request);
+            fetch(request).catch(() => {
+                if (request.mode === 'navigate') {
+                    return caches.match(request);
+                }
+                return Promise.reject('offline');
             })
         );
-    } else {
-        // Network Only (or Network First) for everything else (HTML, API)
-        // failing back to match if network fails (offline support for visited pages?)
-        // For now, let's just do simple fetch to avoid breaking LuCI logic
-        event.respondWith(fetch(event.request));
+        return;
     }
+
+    // Static Assets: Stale-While-Revalidate
+    const isStatic = url.pathname.includes('/luci-static/') ||
+                     url.pathname.endsWith('.css') ||
+                     url.pathname.endsWith('.js') ||
+                     url.pathname.endsWith('.png') ||
+                     url.pathname.endsWith('.ico') ||
+                     url.pathname.endsWith('.svg') ||
+                     url.pathname.endsWith('.woff') ||
+                     url.pathname.endsWith('.woff2') ||
+                     url.pathname.endsWith('.ttf') ||
+                     url.pathname.endsWith('.json');
+
+    if (isStatic) {
+        event.respondWith(
+            caches.match(request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    // Fetch fresh copy in background
+                    fetch(request).then((networkResponse) => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
+                        }
+                    }).catch(() => {});
+                    return cachedResponse;
+                }
+
+                return fetch(request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+                    }
+                    return networkResponse;
+                }).catch(() => {
+                    return new Response('', { status: 408, statusText: 'Request timed out' });
+                });
+            })
+        );
+        return;
+    }
+
+    // Default: Network with cache fallback
+    event.respondWith(
+        fetch(request).catch(() => caches.match(request))
+    );
 });
+
