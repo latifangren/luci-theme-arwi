@@ -1,17 +1,29 @@
-name: Build luci-theme-4lpha
+name: Build and Release luci-theme-Arwi IPK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Makefile'
+      - 'css/**'
+      - 'html/**'
+      - 'js/**'
+
+permissions:
+  contents: write
 
 jobs:
   build:
+    name: Build OpenWrt IPK
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Clone luci-theme-4lpha
-        run: |
-          git clone -b "main" https://github.com/derisamedia/luci-theme-alpha-reborn.git luci-theme-4lpha
-          ls -R luci-theme-4lpha
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          path: luci-theme-Arwi
 
       - name: Install dependencies
         run: |
@@ -27,21 +39,42 @@ jobs:
           SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
           mv "$SDK_DIR" openwrt-sdk
 
-      - name: Copy luci-theme-4lpha
+      - name: Copy luci-theme-Arwi
         run: |
           mkdir -p openwrt-sdk/package/custom
-          cp -r luci-theme-4lpha openwrt-sdk/package/custom/
+          cp -r luci-theme-Arwi openwrt-sdk/package/custom/
 
-      - name: Build luci-theme-4lpha
+      - name: Build luci-theme-Arwi
         run: |
           cd openwrt-sdk
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           make defconfig
-          make package/custom/luci-theme-4lpha/compile V=s
+          make package/custom/luci-theme-Arwi/compile V=s
 
-      - name: Upload ipk
+      - name: Get Version from Makefile
+        id: get_version
+        run: |
+          VERSION=$(grep 'PKG_VERSION:=' luci-theme-Arwi/Makefile | cut -d'=' -f2 | tr -d ' \r\n')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Upload ipk artifact
         uses: actions/upload-artifact@v4
         with:
-          name: luci-theme-4lpha
+          name: luci-theme-Arwi-ipk
           path: openwrt-sdk/bin/packages/**/*.ipk
+          if-no-files-found: error
+
+      - name: Create GitHub Release & Upload IPK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          name: "Release Arwi v${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            openwrt-sdk/bin/packages/**/*.ipk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

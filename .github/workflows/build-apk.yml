@@ -1,4 +1,4 @@
-name: Build luci-theme-alpha APK
+name: Build and Release luci-theme-Arwi APK
 
 on:
   workflow_dispatch:
@@ -11,6 +11,9 @@ on:
       - 'html/**'
       - 'js/**'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build OpenWrt APK
@@ -20,7 +23,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          path: luci-theme-4lpha
+          path: luci-theme-Arwi
 
       - name: Install Dependencies
         run: |
@@ -42,7 +45,7 @@ jobs:
       - name: Copy Theme to SDK
         run: |
           mkdir -p openwrt-sdk/package/custom
-          cp -r luci-theme-4lpha openwrt-sdk/package/custom/
+          cp -r luci-theme-Arwi openwrt-sdk/package/custom/
 
       - name: Ensure APK Generation
         run: |
@@ -55,11 +58,31 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           make defconfig
-          make package/custom/luci-theme-4lpha/compile V=99
+          make package/custom/luci-theme-Arwi/compile V=99
+
+      - name: Get Version from Makefile
+        id: get_version
+        run: |
+          VERSION=$(grep 'PKG_VERSION:=' luci-theme-Arwi/Makefile | cut -d'=' -f2 | tr -d ' \r\n')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: luci-theme-4lpha-apk
+          name: luci-theme-Arwi-apk
           path: openwrt-sdk/bin/packages/**/*.apk
           if-no-files-found: error
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          name: "Release Arwi v${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            openwrt-sdk/bin/packages/**/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
